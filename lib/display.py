@@ -1,38 +1,48 @@
 """Display formatting for email results"""
+
 import re
 from typing import List
 
 from .models import EmailInfo
 from .config import (
-    DISPLAY_NUM_WIDTH, DISPLAY_DATE_WIDTH, DISPLAY_SENDER_WIDTH,
-    DISPLAY_SUBJECT_WIDTH, DISPLAY_ATTACH_WIDTH, DISPLAY_BODY_WIDTH
+    DISPLAY_NUM_WIDTH,
+    DISPLAY_DATE_WIDTH,
+    DISPLAY_SENDER_WIDTH,
+    DISPLAY_SUBJECT_WIDTH,
+    DISPLAY_ATTACH_WIDTH,
+    DISPLAY_BODY_WIDTH,
 )
+
 
 def remove_emojis(text: str) -> str:
     """Remove emojis and other special characters from text"""
     if not text:
         return text
 
-    emoji_pattern = re.compile("["
-        u"\U0001F600-\U0001F64F"  # emoticons
-        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-        u"\U0001F680-\U0001F6FF"  # transport & map symbols
-        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-        u"\U00002702-\U000027B0"
-        u"\U000024C2-\U0001F251"
-        u"\U0001f926-\U0001f937"
-        u"\U00010000-\U0010ffff"
-        u"\u200d"
-        u"\u2640-\u2642"
-        u"\u2600-\u2B55"
-        u"\u23cf"
-        u"\u23e9"
-        u"\u231a"
-        u"\ufe0f"  # variation selector
-        u"\u3030"
-        "]+", flags=re.UNICODE)
+    emoji_pattern = re.compile(
+        "["
+        "\U0001f600-\U0001f64f"  # emoticons
+        "\U0001f300-\U0001f5ff"  # symbols & pictographs
+        "\U0001f680-\U0001f6ff"  # transport & map symbols
+        "\U0001f1e0-\U0001f1ff"  # flags (iOS)
+        "\U00002702-\U000027b0"
+        "\U000024c2-\U0001f251"
+        "\U0001f926-\U0001f937"
+        "\U00010000-\U0010ffff"
+        "\u200d"
+        "\u2640-\u2642"
+        "\u2600-\u2b55"
+        "\u23cf"
+        "\u23e9"
+        "\u231a"
+        "\ufe0f"  # variation selector
+        "\u3030"
+        "]+",
+        flags=re.UNICODE,
+    )
 
-    return emoji_pattern.sub(r'', text)
+    return emoji_pattern.sub(r"", text)
+
 
 def get_attachment_icon(email: EmailInfo) -> str:
     """Get attachment icon based on actual attachment file types"""
@@ -48,26 +58,45 @@ def get_attachment_icon(email: EmailInfo) -> str:
     filetype = email.attachment_types[0].lower() if email.attachment_types else ""
 
     # Check by file extension
-    if filename.endswith('.pdf') or 'pdf' in filetype:
+    if filename.endswith(".pdf") or "pdf" in filetype:
         return "📕"
-    elif filename.endswith(('.jpg', '.jpeg', '.jfif')) or 'jpeg' in filetype:
+    elif filename.endswith((".jpg", ".jpeg", ".jfif")) or "jpeg" in filetype:
         return "🖼️"
-    elif filename.endswith('.png') or 'png' in filetype:
+    elif filename.endswith(".png") or "png" in filetype:
         return "🖼️"
-    elif filename.endswith(('.gif', '.bmp', '.webp')) or 'image' in filetype:
+    elif filename.endswith((".gif", ".bmp", ".webp")) or "image" in filetype:
         return "🖼️"
-    elif filename.endswith(('.doc', '.docx')) or 'word' in filetype or 'document' in filetype:
+    elif (
+        filename.endswith((".doc", ".docx"))
+        or "word" in filetype
+        or "document" in filetype
+    ):
         return "📘"
-    elif filename.endswith(('.xls', '.xlsx')) or 'excel' in filetype or 'spreadsheet' in filetype:
+    elif (
+        filename.endswith((".xls", ".xlsx"))
+        or "excel" in filetype
+        or "spreadsheet" in filetype
+    ):
         return "📗"
-    elif filename.endswith(('.zip', '.rar', '.7z', '.tar', '.gz')) or 'archive' in filetype or 'compressed' in filetype:
+    elif (
+        filename.endswith((".zip", ".rar", ".7z", ".tar", ".gz"))
+        or "archive" in filetype
+        or "compressed" in filetype
+    ):
         return "🗜️"
-    elif filename.endswith(('.mp3', '.wav', '.flac', '.aac', '.ogg')) or 'audio' in filetype:
+    elif (
+        filename.endswith((".mp3", ".wav", ".flac", ".aac", ".ogg"))
+        or "audio" in filetype
+    ):
         return "🎵"
-    elif filename.endswith(('.mp4', '.avi', '.mov', '.mkv', '.wmv')) or 'video' in filetype:
+    elif (
+        filename.endswith((".mp4", ".avi", ".mov", ".mkv", ".wmv"))
+        or "video" in filetype
+    ):
         return "🎬"
     else:
         return "📎"
+
 
 def wrap_text(text: str, width: int) -> List[str]:
     """Simple text wrapping based on character count"""
@@ -78,7 +107,7 @@ def wrap_text(text: str, width: int) -> List[str]:
         return [text]
 
     lines = []
-    words = text.split(' ')
+    words = text.split(" ")
     current_line = ""
 
     for word in words:
@@ -93,7 +122,7 @@ def wrap_text(text: str, width: int) -> List[str]:
             # If word itself is longer than width, split it
             if len(word) > width:
                 for i in range(0, len(word), width):
-                    lines.append(word[i:i+width])
+                    lines.append(word[i : i + width])
                 current_line = ""
             else:
                 current_line = word
@@ -102,6 +131,7 @@ def wrap_text(text: str, width: int) -> List[str]:
         lines.append(current_line)
 
     return lines
+
 
 def display_emails(email_list: List[EmailInfo], show_full: bool = False):
     """Display results with full body text in a properly aligned table"""
@@ -115,18 +145,44 @@ def display_emails(email_list: List[EmailInfo], show_full: bool = False):
     body_width = DISPLAY_BODY_WIDTH
 
     # Print top border
-    print("┌" + "─" * DISPLAY_NUM_WIDTH + "┬" + "─" * DISPLAY_DATE_WIDTH + "┬" +
-          "─" * DISPLAY_SENDER_WIDTH + "┬" + "─" * DISPLAY_SUBJECT_WIDTH + "┬" +
-          "─" * body_width + "┬" + "─" * DISPLAY_ATTACH_WIDTH + "┐")
+    print(
+        "┌"
+        + "─" * DISPLAY_NUM_WIDTH
+        + "┬"
+        + "─" * DISPLAY_DATE_WIDTH
+        + "┬"
+        + "─" * DISPLAY_SENDER_WIDTH
+        + "┬"
+        + "─" * DISPLAY_SUBJECT_WIDTH
+        + "┬"
+        + "─" * body_width
+        + "┬"
+        + "─" * DISPLAY_ATTACH_WIDTH
+        + "┐"
+    )
 
     # Print header row
-    print(f"│{'#':^{DISPLAY_NUM_WIDTH}}│{'Date':^{DISPLAY_DATE_WIDTH}}│{'Sender':^{DISPLAY_SENDER_WIDTH}}│"
-          f"{'Subject':^{DISPLAY_SUBJECT_WIDTH}}│{'Body':^{body_width}}│{'Attach':^{DISPLAY_ATTACH_WIDTH}}│")
+    print(
+        f"│{'#':^{DISPLAY_NUM_WIDTH}}│{'Date':^{DISPLAY_DATE_WIDTH}}│{'Sender':^{DISPLAY_SENDER_WIDTH}}│"
+        f"{'Subject':^{DISPLAY_SUBJECT_WIDTH}}│{'Body':^{body_width}}│{'Attach':^{DISPLAY_ATTACH_WIDTH}}│"
+    )
 
     # Print separator
-    print("├" + "─" * DISPLAY_NUM_WIDTH + "┼" + "─" * DISPLAY_DATE_WIDTH + "┼" +
-          "─" * DISPLAY_SENDER_WIDTH + "┼" + "─" * DISPLAY_SUBJECT_WIDTH + "┼" +
-          "─" * body_width + "┼" + "─" * DISPLAY_ATTACH_WIDTH + "┤")
+    print(
+        "├"
+        + "─" * DISPLAY_NUM_WIDTH
+        + "┼"
+        + "─" * DISPLAY_DATE_WIDTH
+        + "┼"
+        + "─" * DISPLAY_SENDER_WIDTH
+        + "┼"
+        + "─" * DISPLAY_SUBJECT_WIDTH
+        + "┼"
+        + "─" * body_width
+        + "┼"
+        + "─" * DISPLAY_ATTACH_WIDTH
+        + "┤"
+    )
 
     # Track attachment statistics with icons
     attachment_stats = {
@@ -140,14 +196,16 @@ def display_emails(email_list: List[EmailInfo], show_full: bool = False):
         "🎬 Video": 0,
         "📎 Other": 0,
         "📎📎 Multi": 0,
-        "❌ None": 0
+        "❌ None": 0,
     }
 
     # Print each email
     for i, email in enumerate(email_list, 1):
         # Clean body text and remove emojis
-        clean_body = email.full_body.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
-        clean_body = ' '.join(clean_body.split())
+        clean_body = (
+            email.full_body.replace("\n", " ").replace("\r", " ").replace("\t", " ")
+        )
+        clean_body = " ".join(clean_body.split())
         clean_body = remove_emojis(clean_body)
 
         # Remove emojis from sender and subject
@@ -179,9 +237,9 @@ def display_emails(email_list: List[EmailInfo], show_full: bool = False):
                 # Determine if it's JPG or PNG from actual filename
                 if email.attachment_names and len(email.attachment_names) == 1:
                     filename = email.attachment_names[0].lower()
-                    if filename.endswith(('.jpg', '.jpeg', '.jfif')):
+                    if filename.endswith((".jpg", ".jpeg", ".jfif")):
                         attachment_stats["🖼️ JPG"] += 1
-                    elif filename.endswith('.png'):
+                    elif filename.endswith(".png"):
                         attachment_stats["🖼️ PNG"] += 1
                     else:
                         attachment_stats["🖼️ JPG"] += 1
@@ -207,9 +265,9 @@ def display_emails(email_list: List[EmailInfo], show_full: bool = False):
         max_lines = max(len(sender_lines), len(subject_lines), len(body_lines), 1)
 
         # Pad lines to ensure all columns have same number of lines
-        sender_lines += [''] * (max_lines - len(sender_lines))
-        subject_lines += [''] * (max_lines - len(subject_lines))
-        body_lines += [''] * (max_lines - len(body_lines))
+        sender_lines += [""] * (max_lines - len(sender_lines))
+        subject_lines += [""] * (max_lines - len(subject_lines))
+        body_lines += [""] * (max_lines - len(body_lines))
 
         # Print each line of the email
         for line_num in range(max_lines):
@@ -241,18 +299,44 @@ def display_emails(email_list: List[EmailInfo], show_full: bool = False):
                 attach_field = f"{'':^{DISPLAY_ATTACH_WIDTH}}"
 
             # Print row with proper separators
-            print(f"│{num_field}│{date_field}│{sender_field}│{subject_field}│{body_field}│{attach_field}│")
+            print(
+                f"│{num_field}│{date_field}│{sender_field}│{subject_field}│{body_field}│{attach_field}│"
+            )
 
         # Print separator between emails (except after the last one)
         if i < len(email_list):
-            print("├" + "─" * DISPLAY_NUM_WIDTH + "┼" + "─" * DISPLAY_DATE_WIDTH + "┼" +
-                  "─" * DISPLAY_SENDER_WIDTH + "┼" + "─" * DISPLAY_SUBJECT_WIDTH + "┼" +
-                  "─" * body_width + "┼" + "─" * DISPLAY_ATTACH_WIDTH + "┤")
+            print(
+                "├"
+                + "─" * DISPLAY_NUM_WIDTH
+                + "┼"
+                + "─" * DISPLAY_DATE_WIDTH
+                + "┼"
+                + "─" * DISPLAY_SENDER_WIDTH
+                + "┼"
+                + "─" * DISPLAY_SUBJECT_WIDTH
+                + "┼"
+                + "─" * body_width
+                + "┼"
+                + "─" * DISPLAY_ATTACH_WIDTH
+                + "┤"
+            )
 
     # Print bottom border
-    print("└" + "─" * DISPLAY_NUM_WIDTH + "┴" + "─" * DISPLAY_DATE_WIDTH + "┴" +
-          "─" * DISPLAY_SENDER_WIDTH + "┴" + "─" * DISPLAY_SUBJECT_WIDTH + "┴" +
-          "─" * body_width + "┴" + "─" * DISPLAY_ATTACH_WIDTH + "┘")
+    print(
+        "└"
+        + "─" * DISPLAY_NUM_WIDTH
+        + "┴"
+        + "─" * DISPLAY_DATE_WIDTH
+        + "┴"
+        + "─" * DISPLAY_SENDER_WIDTH
+        + "┴"
+        + "─" * DISPLAY_SUBJECT_WIDTH
+        + "┴"
+        + "─" * body_width
+        + "┴"
+        + "─" * DISPLAY_ATTACH_WIDTH
+        + "┘"
+    )
 
     # Print attachment summary with icons
     print("\n📎 Attachment Summary:")
@@ -281,11 +365,13 @@ def display_emails(email_list: List[EmailInfo], show_full: bool = False):
             if email.has_attachments:
                 attach_icon = get_attachment_icon(email)
                 if email.attachment_names:
-                    print(f"Attachments: Yes {attach_icon} ({', '.join(email.attachment_names)})")
+                    print(
+                        f"Attachments: Yes {attach_icon} ({', '.join(email.attachment_names)})"
+                    )
                 else:
                     print(f"Attachments: Yes {attach_icon}")
             else:
-                print(f"Attachments: No ❌")
+                print("Attachments: No ❌")
 
             print("\nContent:")
             print("─" * 40)

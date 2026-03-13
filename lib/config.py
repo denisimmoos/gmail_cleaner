@@ -1,6 +1,8 @@
 """Configuration constants for Gmail Cleaner"""
+
 import logging
 from typing import List
+
 
 # Logging setup
 def setup_logging(debug: bool = False):
@@ -8,17 +10,18 @@ def setup_logging(debug: bool = False):
     level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
+
 
 logger = logging.getLogger(__name__)
 
 # API Scopes
 SCOPES: List[str] = [
-    'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/gmail.modify',
-    'https://mail.google.com/'
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://mail.google.com/",
 ]
 
 # Default prompts

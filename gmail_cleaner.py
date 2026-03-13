@@ -9,25 +9,41 @@ import argparse
 import importlib.util
 from pathlib import Path
 
+# Add lib directory to path
+lib_path = Path(__file__).parent / "lib"
+sys.path.insert(0, str(lib_path))
+
+# Now import from lib modules
+from lib.auth import GmailAuthenticator  # noqa: E402
+from lib.processor import EmailProcessor  # noqa: E402
+from lib.delete_manager import DeleteManager  # noqa: E402
+from lib.display import display_emails  # noqa: E402
+from lib.ai_providers import AISearchFactory  # noqa: E402
+from lib.ignore_manager import IgnoreManager  # noqa: E402
+from lib.config import DEFAULT_AI_PROMPT, setup_logging, logger  # noqa: E402
+from lib.utils import build_query, get_email_ids  # noqa: E402
+from lib.prompts import confirm_deletion  # noqa: E402
+
+
 # Check for required packages before proceeding
 def check_dependencies():
     """Check if required packages are installed"""
     required_packages = {
-        'google': 'google-auth',
-        'google.auth': 'google-auth',
-        'googleapiclient': 'google-api-python-client',
-        'openai': 'openai',
-        'google.generativeai': 'google-generativeai',
-        'requests': 'requests'
+        "google": "google-auth",
+        "google.auth": "google-auth",
+        "googleapiclient": "google-api-python-client",
+        "openai": "openai",
+        "google.generativeai": "google-generativeai",
+        "requests": "requests",
     }
-    
+
     missing_packages = []
-    
+
     for module_name, package_name in required_packages.items():
-        spec = importlib.util.find_spec(module_name.split('.')[0])
+        spec = importlib.util.find_spec(module_name.split(".")[0])
         if spec is None:
             missing_packages.append(package_name)
-    
+
     if missing_packages:
         print("\n❌ Missing required Python packages!\n")
         print("Please set up a virtual environment and install dependencies:\n")
@@ -42,28 +58,15 @@ def check_dependencies():
         print("4. Then run the script again")
         sys.exit(1)
 
+
 # Run dependency check
 check_dependencies()
 
-# Add lib directory to path
-lib_path = Path(__file__).parent / 'lib'
-sys.path.insert(0, str(lib_path))
-
-# Now import from lib modules
-from lib.auth import GmailAuthenticator
-from lib.processor import EmailProcessor
-from lib.delete_manager import DeleteManager
-from lib.display import display_emails
-from lib.ai_providers import AISearchFactory
-from lib.ignore_manager import IgnoreManager
-from lib.config import DEFAULT_AI_PROMPT, setup_logging, logger
-from lib.utils import build_query, get_email_ids
-from lib.prompts import confirm_deletion
 
 def create_parser():
     """Create argument parser"""
     parser = argparse.ArgumentParser(
-        description='Gmail Cleaner - Safely manage and clean your Gmail inbox',
+        description="Gmail Cleaner - Safely manage and clean your Gmail inbox",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -89,56 +92,92 @@ Examples:
   %(prog)s --subject "newsletter"                         # Use default ignore_patterns.inc
   %(prog)s --subject "newsletter" --ignore-file custom.inc # Use custom ignore file
   %(prog)s --subject "newsletter" --no-ignore              # Temporarily disable ignore
-        """
+        """,
     )
 
     # Search options
-    search_group = parser.add_argument_group('Search Options')
-    search_group.add_argument('--before', help='Before date YYYY/MM/DD')
-    search_group.add_argument('--after', help='After date YYYY/MM/DD')
-    search_group.add_argument('--subject', help='Search in subject line')
-    search_group.add_argument('--body', help='Search in email body')
-    search_group.add_argument('--sender', help='Search by sender email or name')
-    search_group.add_argument('--has-attachment', action='store_true', help='Only emails with attachments')
-    search_group.add_argument('--max', type=int, default=100, help='Maximum results (default: 100)')
-    search_group.add_argument('--no-ignore', action='store_true', 
-                            help='Temporarily disable ignore patterns from file')
+    search_group = parser.add_argument_group("Search Options")
+    search_group.add_argument("--before", help="Before date YYYY/MM/DD")
+    search_group.add_argument("--after", help="After date YYYY/MM/DD")
+    search_group.add_argument("--subject", help="Search in subject line")
+    search_group.add_argument("--body", help="Search in email body")
+    search_group.add_argument("--sender", help="Search by sender email or name")
+    search_group.add_argument(
+        "--has-attachment", action="store_true", help="Only emails with attachments"
+    )
+    search_group.add_argument(
+        "--max", type=int, default=100, help="Maximum results (default: 100)"
+    )
+    search_group.add_argument(
+        "--no-ignore",
+        action="store_true",
+        help="Temporarily disable ignore patterns from file",
+    )
 
     # AI options
-    ai_group = parser.add_argument_group('AI-Powered Search')
-    ai_group.add_argument('--ai', nargs='?', const=DEFAULT_AI_PROMPT, metavar='PROMPT',
-                         help='Use AI to generate search query')
-    ai_group.add_argument('--ai-provider', choices=['openai', 'gemini', 'deepseek'],
-                         default='deepseek', help='AI provider to use (default: deepseek)')
+    ai_group = parser.add_argument_group("AI-Powered Search")
+    ai_group.add_argument(
+        "--ai",
+        nargs="?",
+        const=DEFAULT_AI_PROMPT,
+        metavar="PROMPT",
+        help="Use AI to generate search query",
+    )
+    ai_group.add_argument(
+        "--ai-provider",
+        choices=["openai", "gemini", "deepseek"],
+        default="deepseek",
+        help="AI provider to use (default: deepseek)",
+    )
 
     # Action options
-    action_group = parser.add_argument_group('Actions')
-    action_group.add_argument('--trash', action='store_true',
-                            help='Move matching emails to trash')
-    action_group.add_argument('--permanent', action='store_true',
-                            help='PERMANENTLY delete emails (bypass trash) - USE WITH CAUTION')
-    action_group.add_argument('--dry-run', action='store_true',
-                            help='Show what would be deleted without actually deleting')
+    action_group = parser.add_argument_group("Actions")
+    action_group.add_argument(
+        "--trash", action="store_true", help="Move matching emails to trash"
+    )
+    action_group.add_argument(
+        "--permanent",
+        action="store_true",
+        help="PERMANENTLY delete emails (bypass trash) - USE WITH CAUTION",
+    )
+    action_group.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be deleted without actually deleting",
+    )
 
     # Display options
-    display_group = parser.add_argument_group('Display Options')
-    display_group.add_argument('--show-full', action='store_true',
-                              help='Show full email content in results')
-    display_group.add_argument('--debug', action='store_true',
-                              help='Enable debug logging')
+    display_group = parser.add_argument_group("Display Options")
+    display_group.add_argument(
+        "--show-full", action="store_true", help="Show full email content in results"
+    )
+    display_group.add_argument(
+        "--debug", action="store_true", help="Enable debug logging"
+    )
 
     # Ignore file management
-    ignore_group = parser.add_argument_group('Ignore Patterns Management')
-    ignore_group.add_argument('--ignore-file', metavar='FILE',
-                            help='Custom ignore patterns file (default: ignore_patterns.inc)')
-    ignore_group.add_argument('--show-ignored', action='store_true',
-                            help='Show current ignore patterns')
-    ignore_group.add_argument('--add-ignore', metavar='PATTERN',
-                            help='Add pattern to ignore file (use /pattern/ for regex)')
-    ignore_group.add_argument('--ignore-regex', action='store_true',
-                            help='Used with --add-ignore to indicate pattern is regex')
+    ignore_group = parser.add_argument_group("Ignore Patterns Management")
+    ignore_group.add_argument(
+        "--ignore-file",
+        metavar="FILE",
+        help="Custom ignore patterns file (default: ignore_patterns.inc)",
+    )
+    ignore_group.add_argument(
+        "--show-ignored", action="store_true", help="Show current ignore patterns"
+    )
+    ignore_group.add_argument(
+        "--add-ignore",
+        metavar="PATTERN",
+        help="Add pattern to ignore file (use /pattern/ for regex)",
+    )
+    ignore_group.add_argument(
+        "--ignore-regex",
+        action="store_true",
+        help="Used with --add-ignore to indicate pattern is regex",
+    )
 
     return parser
+
 
 def main():
     """Main entry point"""
@@ -165,8 +204,17 @@ def main():
         return 0
 
     # Validate search criteria
-    if not any([args.before, args.after, args.subject, args.body, 
-                args.sender, args.ai, args.has_attachment]):
+    if not any(
+        [
+            args.before,
+            args.after,
+            args.subject,
+            args.body,
+            args.sender,
+            args.ai,
+            args.has_attachment,
+        ]
+    ):
         parser.error("No search criteria provided. Use --help for options.")
 
     # AI-powered search
@@ -181,7 +229,9 @@ def main():
             logger.info(f"📝 Generated query: {ai_query}")
             args.body = ai_query
         else:
-            logger.error("❌ AI search failed. Check your API key or try regular search.")
+            logger.error(
+                "❌ AI search failed. Check your API key or try regular search."
+            )
             return 1
 
     # Build the final query
@@ -223,7 +273,9 @@ def main():
         original_count = len(email_list)
         email_list = ignore_mgr.filter_emails(email_list)
         if len(email_list) < original_count:
-            logger.info(f"Filtered out {original_count - len(email_list)} emails matching ignore patterns")
+            logger.info(
+                f"Filtered out {original_count - len(email_list)} emails matching ignore patterns"
+            )
 
     # Display results
     display_emails(email_list=email_list, show_full=args.show_full)
@@ -239,17 +291,17 @@ def main():
 
         # Execute deletion
         results = delete_mgr.delete_emails(
-            [e.id for e in email_list],
-            permanent=args.permanent,
-            dry_run=args.dry_run
+            [e.id for e in email_list], permanent=args.permanent, dry_run=args.dry_run
         )
 
         if args.dry_run:
-            logger.info(f"\n🔍 DRY RUN COMPLETE: Would have processed {results['dry_run']} emails")
+            logger.info(
+                f"\n🔍 DRY RUN COMPLETE: Would have processed {results['dry_run']} emails"
+            )
         else:
             action = "permanently deleted" if args.permanent else "moved to trash"
             logger.info(f"\n✅ Done: {results['deleted']} emails {action}")
-            if results['failed'] > 0:
+            if results["failed"] > 0:
                 logger.warning(f"⚠️  Failed to delete {results['failed']} emails")
 
     else:
@@ -260,7 +312,8 @@ def main():
 
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:

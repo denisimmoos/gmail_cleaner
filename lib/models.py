@@ -1,10 +1,13 @@
 """Data models for Gmail Cleaner"""
+
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
+
 
 @dataclass
 class EmailInfo:
     """Structured email information"""
+
     id: str
     subject: str
     sender: str

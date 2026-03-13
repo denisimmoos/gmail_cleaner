@@ -1,4 +1,5 @@
 """Gmail authentication module"""
+
 import os
 import sys
 import json
@@ -13,27 +14,28 @@ from googleapiclient.http import set_user_agent
 from .config import SCOPES, USER_AGENT, logger
 from .utils import SecureTokenStorage
 
+
 class GmailAuthenticator:
     """Handles Gmail authentication with improved security"""
 
     def __init__(self):
         self.gmail_env_path = self._find_or_create_env()
-        self.token_path = self.gmail_env_path / 'token.pickle'
-        self.credentials_path = self.gmail_env_path / 'credentials.json'
+        self.token_path = self.gmail_env_path / "token.pickle"
+        self.credentials_path = self.gmail_env_path / "credentials.json"
 
     def _find_or_create_env(self) -> Path:
         """Find or create .gmail_env directory"""
         possible_paths = [
-            Path('.gmail_env'),
-            Path.cwd() / '.gmail_env',
-            Path.home() / '.gmail_env'
+            Path(".gmail_env"),
+            Path.cwd() / ".gmail_env",
+            Path.home() / ".gmail_env",
         ]
 
         for path in possible_paths:
             if path.exists() and path.is_dir():
                 return path
 
-        new_path = Path('.gmail_env')
+        new_path = Path(".gmail_env")
         new_path.mkdir(mode=0o700, exist_ok=True)
         logger.info(f"Created {new_path}/ with secure permissions")
         return new_path
@@ -44,13 +46,13 @@ class GmailAuthenticator:
             return False
 
         try:
-            with open(self.credentials_path, 'r') as f:
+            with open(self.credentials_path, "r") as f:
                 creds = json.load(f)
 
-            if 'installed' in creds:
-                client_id = creds['installed'].get('client_id', '')
-                if client_id and '.apps.googleusercontent.com' in client_id:
-                    if os.name == 'posix':
+            if "installed" in creds:
+                client_id = creds["installed"].get("client_id", "")
+                if client_id and ".apps.googleusercontent.com" in client_id:
+                    if os.name == "posix":
                         os.chmod(self.credentials_path, 0o600)
                     return True
         except Exception as e:
@@ -80,7 +82,7 @@ class GmailAuthenticator:
 
         if creds and creds.valid:
             logger.info("✅ Using saved token")
-            return build('gmail', 'v1', credentials=creds)
+            return build("gmail", "v1", credentials=creds)
 
         if creds and creds.expired and creds.refresh_token:
             logger.info("🔄 Refreshing expired token...")
@@ -92,8 +94,7 @@ class GmailAuthenticator:
         if not creds:
             logger.info("\n🔐 Browser opening for login...")
             flow = InstalledAppFlow.from_client_secrets_file(
-                str(self.credentials_path),
-                SCOPES
+                str(self.credentials_path), SCOPES
             )
             creds = flow.run_local_server(
                 port=0,
@@ -107,6 +108,6 @@ class GmailAuthenticator:
         if SecureTokenStorage.save_token(self.token_path, creds):
             logger.info(f"✅ Token saved securely: {self.token_path}")
 
-        service = build('gmail', 'v1', credentials=creds)
+        service = build("gmail", "v1", credentials=creds)
         set_user_agent(service._http, USER_AGENT)
         return service
