@@ -1,0 +1,22 @@
+# Gmail Cleaner - Ignored Patterns List
+# Add email addresses or patterns to ignore (one per line)
+# Lines starting with # are comments
+# Use /pattern/ for regex matching (case-insensitive)
+
+# Examples - Simple strings (partial matches):
+#newsletter@example.com          # Exact email
+#@spamdomain.com                 # Any email from this domain
+#no-reply@                        # Any no-reply address
+#notifications@                   # Any notification address
+
+# Examples - Regex patterns (enclosed in //):
+#/.*@.*\.spam\.com$/            # Any email from .spam.com domains
+#/^noreply-.*@/                   # noreply-* addresses
+#/@mail\./                        # Contains @mail.
+#/@marketing\./                   # Contains @marketing.
+#/@newsletter\./                  # Contains @newsletter.
+
+# System emails to ignore (simple strings):
+#mailer-daemon@
+#postmaster@
+
